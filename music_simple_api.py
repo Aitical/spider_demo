@@ -5,6 +5,7 @@ import requests
 import json
 import threading
 import re
+import os
 
 headers = {
 	'Accept': '*/*',
@@ -20,28 +21,60 @@ headers = {
 cookies = {'appver':'1.5.2'}
 
 
-#准确搜索歌手,返回id的字符串
-def search_artist(name):
+
+# #准确搜索歌手,返回id的字符串
+# def search_artist(name,type = 100):
+#     '''
+#
+#     :param name:歌手姓名(准确搜索)
+#     :return: 对应的歌手id(str)
+#     '''
+#     url = 'http://music.163.com/api/search/get'
+#     data = {
+#         's': name,
+#         'type': type,
+#         'offset': 0,
+#         'total': 'true',
+#         'limit': 60
+#     }
+#     rr = requests.post(url, data=data)
+#     rr = json.loads(rr.text)
+#     return rr['result']['artists'][0]['id']
+
+#准确搜索
+
+
+
+#通用搜索,返回歌曲和歌手信息
+def search(name,type = 1):
     '''
 
-    :param name:歌手姓名(准确搜索)
-    :return: 对应的歌手id(str)
+    :param name:歌手/专辑/单曲
+    :return:[{'song_name':'','artist':'','artist_id':'','song_id':''},...]
     '''
     url = 'http://music.163.com/api/search/get'
     data = {
         's': name,
-        'type': 100,
+        'type': type,
         'offset': 0,
         'total': 'true',
         'limit': 60
     }
     rr = requests.post(url, data=data)
     rr = json.loads(rr.text)
-    return rr['result']['artists'][0]['id']
+    result = []
+    for j in rr['result']['songs']:
+        song_name = j['name']
+        #过滤歌曲名多余信息
+        if(' - Album Version' in song_name):
+            song_name = song_name[:-15]
+        ##
+        tmp = {'song_name':song_name,'artist':j['artists'][0]['name'],'artist_id':j['artists'][0]['id'],'song_id':j['id']}
+        result.append(tmp)
+    return result
 
 
-#获取歌手的热门单曲前50
-
+#通过歌手id获取歌手的热门单曲前50
 def get_artist_songs(aitists_id):
     '''
 
@@ -63,6 +96,7 @@ def get_artist_songs(aitists_id):
             songs.append((i['href'][9:], i.b['title']))
     return songs
 
+#处理歌词
 def strip_songMessage(rawString):
     '''
 
@@ -78,6 +112,8 @@ def strip_songMessage(rawString):
                 final_c.append(final_i)
     return '\n'.join(final_c)
 
+
+
 #歌词&评论获取
 
 def get_commentContent(song_message):
@@ -91,33 +127,38 @@ def get_commentContent(song_message):
 
     #获取热评
     url_comment = 'http://music.163.com/api/v1/resource/comments/R_SO_4_{}'.format(song_id)
-    f_comment = open(song_message[1]+ '_hotcomment.txt', 'a')
-    f_comment_total = open('commentTotal.txt','a')
-    r = requests.get(url_comment, headers=headers, cookies=cookies)
-    r_json = json.loads(r.text)
-    f_comment_total.write(song_title+'\n\n')
-    for i in r_json['hotComments']:
-        f_comment.write(i['content'] + '\n\n')
-        f_comment_total.write(i['content']+'\n\n')
-    f_comment.close()
-    f_comment_total.close()
+    if(os.path.isfile('评论/'+song_message[1]+ '_hotcomment.txt')):
+        return
+    else:
+        f_comment = open('评论/'+song_message[1] + '_hotcomment.txt', 'a')
+        f_comment_total = open('commentTotal.txt', 'a')
+        r = requests.get(url_comment, headers=headers, cookies=cookies)
+        r_json = json.loads(r.text)
+        f_comment_total.write(song_title + '\n\n')
+        for i in r_json['hotComments']:
+            f_comment.write(i['content'] + '\n\n')
+            f_comment_total.write(i['content'] + '\n\n')
+        f_comment.close()
+        f_comment_total.close()
 
-    #歌词信息
-    url_cc = 'http://music.163.com/api/song/lyric?os=pc&id={}&lv=-1&kv=-1&tv=-1'.format(song_id)
-    r_cc = requests.get(url_cc,headers=headers, cookies=cookies)
-    json_t = json.loads(r_cc.text)
-    f_title = open(song_title+'.txt','w')
-    f_title_total = open('songTotal.txt','a')
-    final_cc = strip_songMessage(json_t['lrc']['lyric'])
-    f_title.write(final_cc)
-    f_title_total.write(final_cc+'\n')
-    f_title.close()
-    f_title_total.close()
-    print(song_message[1],'succeeded!')
+        # 歌词信息
+        url_cc = 'http://music.163.com/api/song/lyric?os=pc&id={}&lv=-1&kv=-1&tv=-1'.format(song_id)
+        r_cc = requests.get(url_cc, headers=headers, cookies=cookies)
+        json_t = json.loads(r_cc.text)
+        f_title = open('歌词/'+song_title + '.txt', 'w')
+        f_title_total = open('songTotal.txt', 'a')
+        final_cc = strip_songMessage(json_t['lrc']['lyric'])
+        f_title.write(final_cc)
+        f_title_total.write(final_cc + '\n')
+        f_title.close()
+        f_title_total.close()
+        print(song_message[1], 'succeeded!')
 
 if(__name__ == '__main__'):
 
-    artist_id = search_artist('周杰伦')
+    search_message = search('陈奕迅')
+    artist_id = search_message[0]['artist_id']
     songs_lst = get_artist_songs(artist_id)
+
     for i in songs_lst:
         get_commentContent(i)
