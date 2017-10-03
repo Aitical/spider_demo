@@ -7,7 +7,9 @@ import threading
 import re
 import os
 
+count = 0
 
+preurl = 'http://music.163.com'
 
 headers = {
 	'Accept': '*/*',
@@ -76,32 +78,48 @@ def search(name,type = 1):
     return result
 
 
+# #通过歌手id获取歌手的热门单曲前50
+# def get_artist_songs(aitists_id):
+#     '''
+#
+#     :param aitists_id:歌手id
+#     :return: 前50的热门单曲->结构[(song_id(str),song_title),...]
+#     '''
+#     driver = webdriver.PhantomJS(executable_path='/usr/bin/phantomjs')
+#     url = 'https://music.163.com/m/artist?id={}'.format(aitists_id)
+#     driver.get(url)
+#     driver.switch_to_frame('g_iframe')
+#     wait = ui.WebDriverWait(driver, 15)#####
+#     # 等待元素渲染出来
+#     soup = BeautifulSoup(driver.page_source, 'lxml')
+#
+#     all_a = soup.find_all('a')
+#     songs = []
+#     for i in all_a:
+#         if (i.b):
+#             songs.append((i['href'][9:], i.b['title']))
+#     return songs
+#woc啊,垃圾博客推荐的爬取动态网页，还tm要等待渲染，老哥，url都找不准，还爬取个毛线？？？？
+#已更新如下
+
 #通过歌手id获取歌手的热门单曲前50
 def get_artist_songs(aitists_id):
     '''
-
-    :param aitists_id:歌手id
-    :return: 前50的热门单曲->结构[(song_id(str),song_title),...]
+    通过歌手id获取歌手的热门单曲前50
+    :param aitists_id: 歌手id=>数字字符串
+    :return: 前50的单曲信息->结构[[song_id(str),song_title],...]
     '''
-    driver = webdriver.PhantomJS(executable_path='/usr/bin/phantomjs')
-    url = 'https://music.163.com/m/artist?id={}'.format(aitists_id)
-    driver.get(url)
-    driver.switch_to_frame('g_iframe')
-    wait = ui.WebDriverWait(driver, 15)#####
-    # 等待元素渲染出来
-    soup = BeautifulSoup(driver.page_source, 'lxml')
-
-    all_a = soup.find_all('a')
-    songs = []
-    for i in all_a:
-        if (i.b):
-            songs.append((i['href'][9:], i.b['title']))
-    return songs
+    url = 'https://music.163.com/artist?id={}'.format(aitists_id)
+    tmp_r = requests.get(url, headers=headers, cookies=cookies)
+    soup = BeautifulSoup(tmp_r.text, 'lxml')
+    song_id = re.compile('/song\?id=[0-9]+')
+    songs_list = [[songId['href'][9:], songId.text] for songId in soup.find_all('a', attrs={'href': song_id})]
+    return songs_list
 
 #处理歌词
 def strip_songMessage(rawString):
     '''
-
+    处理歌词
     :param rawString: get到的原生的歌词形式字符串
     :return: 处理后的歌词->已用回车链接,最后一句没有回车
     '''
@@ -129,11 +147,16 @@ def get_commentContent(song_message):
 
     #获取热评
     url_comment = 'http://music.163.com/api/v1/resource/comments/R_SO_4_{}'.format(song_id)
+
+
     if(os.path.isfile('评论/'+song_message[1]+ '_hotcomment.txt')):
         return
     else:
-        f_comment = open('评论/'+song_message[1] + '_hotcomment.txt', 'a')
-        f_comment_total = open('commentTotal.txt', 'a')
+        try:
+            f_comment = open('评论/'+song_message[1] + '_hotcomment.txt', 'a')
+            f_comment_total = open('commentTotal.txt', 'a')
+        except:
+            return
         r = requests.get(url_comment, headers=headers, cookies=cookies)
         r_json = json.loads(r.text)
         f_comment_total.write(song_title + '\n\n')
@@ -143,24 +166,65 @@ def get_commentContent(song_message):
         f_comment.close()
         f_comment_total.close()
 
+
+
         # 歌词信息
         url_cc = 'http://music.163.com/api/song/lyric?os=pc&id={}&lv=-1&kv=-1&tv=-1'.format(song_id)
         r_cc = requests.get(url_cc, headers=headers, cookies=cookies)
         json_t = json.loads(r_cc.text)
-        f_title = open('歌词/'+song_title + '.txt', 'w')
-        f_title_total = open('songTotal.txt', 'a')
-        final_cc = strip_songMessage(json_t['lrc']['lyric'])
-        f_title.write(final_cc)
-        f_title_total.write(final_cc + '\n')
-        f_title.close()
-        f_title_total.close()
-        print(song_message[1], 'succeeded!')
+        if('nolyric' in json_t.keys() or 'uncollected' in json_t.keys()):
+            print('无歌词信息')
+        else:
+            if(json_t['lrc']['version']!=0):
+                f_title = open('歌词/' + song_title + '.txt', 'w')
+                f_title_total = open('songTotal.txt', 'a')
+                final_cc = strip_songMessage(json_t['lrc']['lyric'])
+                f_title.write(final_cc)
+                f_title_total.write(final_cc + '\n')
+                f_title.close()
+                f_title_total.close()
+                print(song_message[1], 'succeeded!')
+            else:
+                print('无歌词信息')
+
+#2017-10-03
+#获取当前页所有的歌单
+def get_palylist(page_id):
+    '''
+    获取当前页所有的歌单
+    :param page_id:指定页数的歌单
+    :return: 该页含有的所有歌单的id=>每页含有35个,已处理成直接访问歌曲内容的url
+    '''
+    url = 'https://music.163.com/discover/playlist/?order=hot&cat=%E5%85%A8%E9%83%A8&limit=35&offset={}'.format(page_id)
+    tmp_r = requests.get(url, headers=headers, cookies=cookies)
+    soup = BeautifulSoup(tmp_r.text, 'lxml')
+    playIdLst = [preurl + songid['href'] for songid in soup.find_all('a', attrs={'class': 'msk'}) if songid['href']]
+    return playIdLst
+
+#获取指定歌单的所有歌曲id
+def get_songs_inplaylist(url):
+    '''
+    获取指定歌单的所有歌曲id
+    :param url: 歌单的url=>注意不要直接复制浏览器的url,去掉中间的‘#/‘
+    :return: 歌单含有的歌曲的id=>[id1,...]
+    '''
+    tmp_r = requests.get(url, headers=headers, cookies=cookies)
+    soup = BeautifulSoup(tmp_r.text,'lxml')
+    song_id = re.compile('/song\?id=[0-9]+')
+    song_messages = [[songId['href'][9:],songId.text] for songId in soup.find_all('a',attrs={'href':song_id})]
+    return song_messages
+
+def main_child(play):
+    song_messages = get_songs_inplaylist(play)
+    for songMessage in song_messages:
+        get_commentContent(songMessage)
+
+def  main(playLst):
+    for play in playLst:
+        threading.Thread(target = main_child,args = play)
+
+
 
 if(__name__ == '__main__'):
 
-    search_message = search('陈奕迅')
-    artist_id = search_message[0]['artist_id']
-    songs_lst = get_artist_songs(artist_id)
-
-    for i in songs_lst:
-        get_commentContent(i)
+   pass
