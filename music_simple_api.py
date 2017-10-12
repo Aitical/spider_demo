@@ -79,14 +79,14 @@ def search(name,type = 1):
 
 
 # #通过歌手id获取歌手的热门单曲前50
-# def get_artist_songs(aitists_id):
+# def get_artist_songs(artists_id):
 #     '''
 #
-#     :param aitists_id:歌手id
+#     :param artists_id:歌手id
 #     :return: 前50的热门单曲->结构[(song_id(str),song_title),...]
 #     '''
 #     driver = webdriver.PhantomJS(executable_path='/usr/bin/phantomjs')
-#     url = 'https://music.163.com/m/artist?id={}'.format(aitists_id)
+#     url = 'https://music.163.com/m/artist?id={}'.format(artists_id)
 #     driver.get(url)
 #     driver.switch_to_frame('g_iframe')
 #     wait = ui.WebDriverWait(driver, 15)#####
@@ -103,13 +103,13 @@ def search(name,type = 1):
 #已更新如下
 
 #通过歌手id获取歌手的热门单曲前50
-def get_artist_songs(aitists_id):
+def get_artist_songs(artists_id):
     '''
     通过歌手id获取歌手的热门单曲前50
-    :param aitists_id: 歌手id=>数字字符串
+    :param artists_id: 歌手id=>数字字符串
     :return: 前50的单曲信息->结构[[song_id(str),song_title],...]
     '''
-    url = 'https://music.163.com/artist?id={}'.format(aitists_id)
+    url = 'https://music.163.com/artist?id={}'.format(artists_id)
     tmp_r = requests.get(url, headers=headers, cookies=cookies)
     soup = BeautifulSoup(tmp_r.text, 'lxml')
     song_id = re.compile('/song\?id=[0-9]+')
@@ -145,11 +145,20 @@ def get_commentContent(song_message):
     song_id = song_message[0]
     song_title = song_message[1]
 
+    #初始化文件路径
+    if (os.path.isdir('./歌词') and os.path.isdir('./评论')):
+        pass
+    else:
+        if (not os.path.isdir('./歌词')):
+            os.mkdir('./歌词')
+        if (not os.path.isdir('./评论')):
+            os.mkdir('./评论')
+
     #获取热评
     url_comment = 'http://music.163.com/api/v1/resource/comments/R_SO_4_{}'.format(song_id)
 
-
     if(os.path.isfile('评论/'+song_message[1]+ '_hotcomment.txt')):
+        print(song_message[1] + '\t信息已获取')
         return
     else:
         try:
@@ -226,5 +235,8 @@ def  main(playLst):
 
 
 if(__name__ == '__main__'):
-
-   pass
+    #获取周杰伦前50热门评论
+    data = search('周杰伦')[0]
+    songsLst = get_artist_songs(data['artist_id'])
+    for songMessage in songsLst:
+        get_commentContent(songMessage)
