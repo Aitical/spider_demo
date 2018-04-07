@@ -9,7 +9,7 @@ music_spider/config.json
 music_spider/get_data/*.txt
 music_spider/sql_manage/*.txt
 music_spider/test/*.txt
-music_spider/*.txt
+music_spider/*/*/*.txt
 music_analysis/.ipynb_checkpoints/
 */__pycache__/
 */.ipynb_checkpoints/
