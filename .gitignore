@@ -8,7 +8,7 @@ music_api/analysis/migrations/0*.py
 music_spider/config.json
 music_spider/get_data/*.txt
 music_spider/sql_manage/*.txt
-music_spider/test/*.txt
+music_spider/test/
 music_spider/*/*/*.txt
 music_analysis/.ipynb_checkpoints/
 */__pycache__/
