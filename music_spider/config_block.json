@@ -1,0 +1,20 @@
+{
+  "DB": {
+    "message_music": {
+      "host": "127.0.0.1",
+      "db": "163music",
+      "user": "root",
+      "passwd": " ",
+      "charset": "utf8mb4"
+    },
+    "message_data": {
+      "host": "127.0.0.1",
+      "db": "163data",
+      "user": "root",
+      "passwd": " ",
+      "charset": "utf8mb4"
+    }
+  },
+
+  "CACHE_FILE": "cache1"
+}
