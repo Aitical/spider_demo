@@ -16,5 +16,11 @@
     }
   },
 
-  "CACHE_FILE": "cache1"
+  "CACHE_FILE": "cache1",
+
+  "ONLINE":{
+    "sleep": "120",
+    "username": "student_id",
+    "password": "password"
+  }
 }

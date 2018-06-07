@@ -96,6 +96,7 @@ class UserPlaylist(object):
         playlist_data = []
         user_playlist = []
         creator_data = []
+        res_status = True
         while True:
             param = {
                 'offset': offset,
@@ -103,6 +104,11 @@ class UserPlaylist(object):
                 'uid': user_id
             }
             resp = requests.get(self.url, params=param, headers=self.header).json()
+
+            if 'playlist' not in resp:
+                res_status = False
+                break
+
             playlists = resp['playlist']
             length = len(playlists)
             for playlist in playlists:
@@ -144,17 +150,26 @@ class UserPlaylist(object):
                 break
             offset += 40
             time.sleep(random.randint(22, 33) / 10)
-        self.save(creator_data, 'creator')
-        self.save(user_playlist, 'user_playlist')
-        self.save(playlist_data, 'playlist_message')
-        self.cache(user_id)
+
+        if res_status:
+            self.save(creator_data, 'creator')
+            self.save(user_playlist, 'user_playlist')
+            self.save(playlist_data, 'playlist_message')
+            self.cache(user_id)
+
+        return res_status
 
     def run(self):
         next_ids = self.get_next_id()
         for user_id in next_ids:
-            self.get_playlist_and_user_message(user_id)
-            time.sleep(random.randint(22, 33) / 10)
-            self.cache(user_id, 'cache')
+            status = self.get_playlist_and_user_message(user_id)
+            if status:
+                time.sleep(random.randint(22, 33) / 10)
+                self.cache(user_id, 'cache')
+            else:
+                print('playlist ip failed')
+                self.cache(user_id, 'failed')
+                time.sleep(3*60*60)
 
 
 if __name__ == '__main__':

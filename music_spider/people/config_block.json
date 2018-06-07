@@ -1,0 +1,13 @@
+{
+  "DB": {
+    "people": {
+      "host": "127.0.0.1",
+      "db": "people",
+      "user": "root",
+      "passwd": " ",
+      "charset": "utf8"
+    }
+  },
+  "RUNNING_ID": 1,
+  "ERROR_TIMES": 5
+}

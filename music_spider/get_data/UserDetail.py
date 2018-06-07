@@ -86,7 +86,8 @@ class UserDetail(object):
         :return: None
         """
         sql = "INSERT INTO api_userdetail" \
-              "(user_id, user_name, level, sex, event_count, follow_count, fan_count, loc_city, age, self_desc, loc_province) " \
+              "(user_id, user_name, level, sex, event_count, " \
+              "follow_count, fan_count, loc_city, age, self_desc, loc_province) " \
               "VALUES (%s, %s,%s, %s,%s, %s,%s, %s,%s, %s, %s)"
 
         message = self.message_music
