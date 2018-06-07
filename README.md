@@ -31,8 +31,6 @@ web框架采用`Django2.0`,前端样式采用开源项目`Gentella`
 
 处理`music_analysis`中的数据
 
-
-
 更多项目说明请看后面详细信息
 
 ### 使用方法:
@@ -48,7 +46,35 @@ cp config_block.json config.json
 
 `CACHE_FILE`为运行目录(推荐`cache2`或`chahe3`)
 
-配置完成后运行`run.py`即可启动爬虫
+配置完成后
+
+启动爬虫:
+
+```shell
+python3 run.py run
+```
+
+查看运行状态:
+
+```shell
+python3 run.py status
+```
+
+查看全部命令
+
+```shell
+python3 run.py h
+```
+
+测试功能
+
+```shell
+python3 run.py test
+```
+
+注: 
+
+test启动的功能是在开发中的测试功能,不一定可以运行,正常执行请使用run,当然也很感谢你参与test中功能的开发
 
 前端部分采用`Django`混合开发(有待完成)
 
@@ -59,8 +85,6 @@ python3 manage.py runserver
 ```
 
 即可看到网站效果(未完成)
-
-
 
 ### 几点说明:
 
@@ -86,11 +110,9 @@ sudo apt install libmysqlclient-dev
 
 如果只使用爬虫脚本,则只需要配置好数据库后运行`music_spider`模块
 
-
-
 ### 详细说明
 
-
+在爬虫模块增加了人民网文章爬虫
 
 #### music_spider
 
@@ -99,15 +121,29 @@ sudo apt install libmysqlclient-dev
 ├── config_block.json // 默认配置文件模板
 ├── config.json // 本机运行的配置文件信息
 ├── get_data  // 爬虫的代码实现部分
-│   ├── __init__.py
-│   ├── Jay.py  // 抓取周董的歌曲信息(有待完成,待添加)
-│   ├── PlayListDetail.py  // 抓取歌单详细信息(有待完成, 待添加)
+├── __init__.py
+│   ├── test
+│   │	├── Jay.py  // 抓取周董的歌曲信息(有待完成,待添加)
+│   │	├── SongCommentProxy.py  // 使用代理(已完成)
+│   │	├── PlayListDetail.py  // 抓取歌单详细信息(有待完成, 待添加)
 │   ├── SongComment.py  // 抓取歌曲评论
 │   ├── UserDetail.py  // 抓取用户基本信息
 │   ├── UserPlaylist.py  // 抓取用户歌单
-├── run.py	// 运行接口
+│   ├── Online.py  // 校园网连接检测断网重连
+├── run.py	// 运行入口
+├── people  // 人民网文章爬虫
+│   ├── 1_news_log.txt  // 运行日志文件
+│   ├── 1_running_log.txt
+│   ├── 2_running_log.txt
+│   ├── 3_news_log.txt
+│   ├── 4_running_log.txt
+│   ├── config_block.json  // 人民网爬虫配置文件模板
+│   ├── config.json  // 爬虫配置文件
+│   ├── create_db.py  // 数据库模型
+│   ├── news.py  // 采集新闻内容
+│   └── people.py   // 采集新闻url
 ├── sql_manage // 进行数据清洗部分(有待系统完成)
-├── test  // 一些本地测试和添加的功能(有待系统完成)
+├── test  // 一些本地测试和待添加的功能(有待系统完成)
 ├── update_songs // 进行更新内容(有待系统完成)
 └── workspace  // 爬虫运行所需的id相关信息和运行日志的存放区
     ├── cache1  // 每个区有三个部分
